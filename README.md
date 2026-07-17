@@ -5,39 +5,62 @@ API test suite for the SecureVault service, built with **Python + pytest + reque
 ## Stack
 - `pytest` — test runner
 - `requests` — HTTP client
-- `pytest-html` — HTML reporting
-- `python-dotenv` — environment configuration
-- `jsonschema` — response schema validation
+- `faker` — test data generation (payload builders)
+- `python-dotenv` — environment / credential configuration
+- `pytest-html` — self-contained HTML reporting
+- `jsonschema` — OpenAPI schema conformance (reports summary)
 
 ## Layout
 ```
 securevault-api-tests/
-├── src/securevault_api/      # API-interaction toolkit (clients, models, config, builders)
-│   └── data/builders/        # Faker-based payload builders
-├── tests/                    # Test cases
-│   ├── api/                  # Endpoint-level tests grouped by domain
-│   └── utils/                # Test-support helpers (custom assertions)
-├── conftest.py               # Root fixtures
-├── pytest.ini                # Pytest configuration
-├── requirements.txt          # Dependencies
-└── .env.example              # Environment variable template
+├── src/securevault_api/       # API-interaction toolkit
+│   ├── clients/               # HTTP clients: base, auth, assets, findings,
+│   │                          #   reports, scans, system
+│   ├── config/                # settings.py — env + test-user loading
+│   ├── models/                # asset.py, finding.py dataclasses (+ to_payload)
+│   └── data/builders/         # Faker-based payload builders
+├── tests/
+│   ├── api/                   # endpoint tests by domain, each in its own package:
+│   │                          #   assets, auth, findings, isolation, reports,
+│   │                          #   scans, search
+│   │   └── conftest.py        # actor + authenticated-client fixtures
+│   └── utils/                 # assertions.py, pagination.py
+├── conftest.py                # root fixtures (settings) + assert rewriting
+├── pytest.ini                 # pytest config, markers, HTML report
+├── requirements.txt           # pinned dependencies
+├── .env.example               # environment variable template
+└── FINDINGS.md                # confirmed API defects surfaced by the suite
 ```
 
 ## Running
 ```bash
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env          # then fill in values
-pytest                        # run everything (writes report.html)
-pytest -m smoke               # run a marker
-pytest tests/api/auth         # run a subset
+cp .env.example .env           # then fill in base_url + per-org credentials
+
+pytest                         # run everything (writes report.html)
+pytest -m p1_critical          # run by priority marker (p1_critical..p4_medium)
+pytest -m isolation            # run by domain marker (assets, findings, isolation, ...)
+pytest tests/api/auth          # run a subset by path
 ```
 
 Every run produces a self-contained `report.html` (gitignored) with results,
 durations, and failure details — open it directly in a browser.
 
-## Environments
-Target environment is selected via the `ENV` variable (`dev` / `staging` / `prod`),
-resolved in `src/securevault_api/config`.
+## Markers
+- **Priority** (from the test spec): `p1_critical`, `p2_high`, `p3_high`, `p4_medium`.
+- **Domain**: `auth`, `assets`, `findings`, `reports`, `scans`, `isolation`, `search`.
+- **Other**: `smoke`, `regression`, `integration`.
+
+`--strict-markers` is on, so every marker must be registered in `pytest.ini`.
+
+## Test users & orgs
+Credentials are loaded from `.env` (never committed) via `securevault_api.config`.
+The suite uses three actors across two organizations:
+`admin`/`analyst` in **org-alpha** (the resource-owning org) and `admin` in
+**org-beta** (a separate org kept finding-free so the empty-org report case stays
+reproducible). Tests skip automatically when a required credential is missing.
+Target host is set by `BASE_URL`; `ENV` selects the logical environment.
 
 ## Findings
 Confirmed API defects surfaced by the suite are tracked in [FINDINGS.md](FINDINGS.md).
