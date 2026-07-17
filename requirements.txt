@@ -5,4 +5,5 @@ jsonschema==4.26.0
 pytest-html==4.2.0
 faker==40.31.0
 # allure-pytest
-# pytest-xdist   # parallel execution
+# pytest-xdist   
+# parallel execution
