@@ -13,10 +13,10 @@ API test suite for the SecureVault service, built with **Python + pytest + reque
 ```
 securevault-api-tests/
 ├── src/securevault_api/      # Reusable test framework (clients, models, config, utils)
+│   └── data/                 # Test payloads & JSON schemas
 ├── tests/                    # Test cases
 │   ├── api/                  # Endpoint-level tests grouped by domain
 │   └── integration/          # Multi-endpoint / end-to-end flows
-├── data/                     # Test payloads & JSON schemas
 ├── conftest.py               # Root fixtures
 ├── pytest.ini                # Pytest configuration
 ├── requirements.txt          # Dependencies

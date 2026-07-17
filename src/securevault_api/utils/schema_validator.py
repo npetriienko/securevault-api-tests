@@ -1,4 +1,4 @@
 """JSON Schema validation helpers (wraps jsonschema).
 
-Loads schemas from data/schemas and validates response bodies against them.
+Loads schemas from securevault_api/data/schemas and validates response bodies against them.
 """
