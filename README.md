@@ -32,20 +32,52 @@ securevault-api-tests/
 └── FINDINGS.md                # confirmed API defects surfaced by the suite
 ```
 
-## Running
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env           # then fill in base_url + per-org credentials
+## Getting started
 
+**Prerequisites:** Python 3.10+ and access to a running SecureVault API instance
+with valid test-user credentials. The tests run against a **live API** — there is
+no mock server.
+
+**1. Clone and install**
+```bash
+git clone <your-fork-url> securevault-api-tests
+cd securevault-api-tests
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+**2. Configure the environment**
+```bash
+cp .env.example .env
+```
+Then edit `.env` and set the target host and credentials (`.env` is gitignored —
+never commit it):
+
+| Variable | Description |
+|---|---|
+| `BASE_URL` | API base URL, e.g. `http://host:8000` |
+| `ENV` | Logical environment label (`dev` / `staging` / `prod`) |
+| `ADMIN_ORG_ALPHA_EMAIL` / `_PASSWORD` | org-alpha admin |
+| `ANALYST_ORG_ALPHA_EMAIL` / `_PASSWORD` | org-alpha analyst |
+| `ADMIN_ORG_BETA_EMAIL` / `_PASSWORD` | org-beta admin |
+
+Tests whose credentials are missing are **skipped** automatically, so you can run
+a subset with only some accounts configured.
+
+**3. Run the tests**
+```bash
 pytest                         # run everything (writes report.html)
 pytest -m p1_critical          # run by priority marker (p1_critical..p4_medium)
 pytest -m isolation            # run by domain marker (assets, findings, isolation, ...)
 pytest tests/api/auth          # run a subset by path
+pytest -m "not p4_medium"      # exclude a marker
 ```
 
 Every run produces a self-contained `report.html` (gitignored) with results,
 durations, and failure details — open it directly in a browser.
+
+> **Expected result:** some tests **fail by design** — they reproduce confirmed
+> API defects and are intentionally left red. See [FINDINGS.md](FINDINGS.md).
 
 ## Markers
 - **Priority** (from the test spec): `p1_critical`, `p2_high`, `p3_high`, `p4_medium`.
@@ -61,6 +93,18 @@ The suite uses three actors across two organizations:
 **org-beta** (a separate org kept finding-free so the empty-org report case stays
 reproducible). Tests skip automatically when a required credential is missing.
 Target host is set by `BASE_URL`; `ENV` selects the logical environment.
+
+## Continuous integration
+[`.github/workflows/tests.yml`](.github/workflows/tests.yml) runs the suite on push,
+pull request, and manual dispatch, and uploads `report.html` as an artifact. Because
+tests hit a live API, configure these under the repo's **Settings → Secrets and
+variables → Actions**:
+- **Variables:** `ENV`, `BASE_URL`
+- **Secrets:** `ADMIN_ORG_ALPHA_EMAIL/_PASSWORD`, `ANALYST_ORG_ALPHA_EMAIL/_PASSWORD`,
+  `ADMIN_ORG_BETA_EMAIL/_PASSWORD` (and `API_KEY` if used)
+
+Without them the credential-dependent tests skip. Note the build reflects real API
+health — it stays red while the defects in [FINDINGS.md](FINDINGS.md) are open.
 
 ## Findings
 Confirmed API defects surfaced by the suite are tracked in [FINDINGS.md](FINDINGS.md).
