@@ -17,9 +17,11 @@ class BaseClient:
         session=None,
         timeout=30,
         default_headers=None,
-        retries=3,
+        retries=0,
         backoff_factor=0.5,
     ):
+        # retries defaults to 0: this is a test framework, so we want to observe
+        # server responses (including 5xx) and assert on them, not retry them away.
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout = timeout
         self.session = session or requests.Session()

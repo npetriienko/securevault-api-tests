@@ -3,5 +3,6 @@ requests
 python-dotenv
 jsonschema
 pytest-html
+faker
 # allure-pytest
 # pytest-xdist   # parallel execution
