@@ -1,0 +1,7 @@
+pytest
+requests
+python-dotenv
+jsonschema
+pytest-html
+# allure-pytest
+# pytest-xdist   # parallel execution
