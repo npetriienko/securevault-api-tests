@@ -5,7 +5,7 @@ API test suite for the SecureVault service, built with **Python + pytest + reque
 ## Stack
 - `pytest` — test runner
 - `requests` — HTTP client
-- `pytest-html` / `allure-pytest` — reporting (optional)
+- `pytest-html` — HTML reporting
 - `python-dotenv` — environment configuration
 - `jsonschema` — response schema validation
 
@@ -27,10 +27,13 @@ securevault-api-tests/
 ```bash
 pip install -r requirements.txt
 cp .env.example .env          # then fill in values
-pytest                        # run everything
+pytest                        # run everything (writes report.html)
 pytest -m smoke               # run a marker
 pytest tests/api/auth         # run a subset
 ```
+
+Every run produces a self-contained `report.html` (gitignored) with results,
+durations, and failure details — open it directly in a browser.
 
 ## Environments
 Target environment is selected via the `ENV` variable (`dev` / `staging` / `prod`),

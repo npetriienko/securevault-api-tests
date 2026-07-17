@@ -25,10 +25,14 @@ jobs:
         env:
           ENV: ${{ vars.ENV }}
           BASE_URL: ${{ vars.BASE_URL }}
-          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
-          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          ADMIN_ORG_ALPHA_EMAIL: ${{ secrets.ADMIN_ORG_ALPHA_EMAIL }}
+          ADMIN_ORG_ALPHA_PASSWORD: ${{ secrets.ADMIN_ORG_ALPHA_PASSWORD }}
+          ANALYST_ORG_ALPHA_EMAIL: ${{ secrets.ANALYST_ORG_ALPHA_EMAIL }}
+          ANALYST_ORG_ALPHA_PASSWORD: ${{ secrets.ANALYST_ORG_ALPHA_PASSWORD }}
+          ADMIN_ORG_BETA_EMAIL: ${{ secrets.ADMIN_ORG_BETA_EMAIL }}
+          ADMIN_ORG_BETA_PASSWORD: ${{ secrets.ADMIN_ORG_BETA_PASSWORD }}
           API_KEY: ${{ secrets.API_KEY }}
-        run: pytest --html=report.html --self-contained-html
+        run: pytest
 
       - name: Upload report
         if: always()
