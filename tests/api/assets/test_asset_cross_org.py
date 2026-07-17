@@ -2,9 +2,11 @@
 
 import pytest
 
+from securevault_api.data.builders import AssetBuilder
+
 
 @pytest.fixture
-def org_beta_asset(require_user, assets_client_for):
+def org_beta_asset(require_user, assets_client_for, faker):
     """Precondition: an asset that exists only in org-beta.
 
     Yields the created asset payload (incl. id); deletes it on teardown.
@@ -12,13 +14,7 @@ def org_beta_asset(require_user, assets_client_for):
     admin_beta = require_user("admin", "org-beta")
     client = assets_client_for(admin_beta)
 
-    payload = {
-        "name": "cross-org-isolation-probe",
-        "asset_type": "S3",
-        "cloud_account": "999999999999",
-        "region": "eu-west-1",
-        "tags": {"purpose": "isolation-test"},
-    }
+    payload = AssetBuilder(faker).build().to_payload()
     response = client.create_asset(payload)
     assert response.status_code == 200, (
         f"Setup failed to create org-beta asset: {response.status_code} {response.text}"
