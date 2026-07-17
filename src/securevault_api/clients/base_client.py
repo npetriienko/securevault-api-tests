@@ -30,9 +30,9 @@ class BaseClient:
         if retries:
             retry = Retry(
                 total=retries,
-                backoff_factor = backoff_factor,
-                status_force_list = (500, 502, 503, 504),
-                allowed_methods = ("GET", "POST", "PUT", "PATCH", "DELETE"),
+                backoff_factor=backoff_factor,
+                status_forcelist=(500, 502, 503, 504),
+                allowed_methods=("GET", "POST", "PUT", "PATCH", "DELETE"),
             )
             adapter = HTTPAdapter(max_retries=retry)
             self.session.mount("http://", adapter)
