@@ -5,33 +5,41 @@ Each entry links to the test that reproduces it.
 
 | ID | Severity | Title | Test | Status |
 |----|----------|-------|------|--------|
-| F-001 | Critical | Cross-org asset retrieval is not blocked | `tests/api/assets/test_asset_cross_org.py::test_cross_org_asset_retrieval_is_blocked` (TC-P1-01) | Open |
+| F-001 | Critical | Cross-org asset access (read/update/delete) is not blocked | `tests/api/assets/test_asset_cross_org.py` (TC-P1-01/02/03), `tests/api/isolation/test_idor_and_roles.py` (TC-P1-07/08) | Open |
 | F-002 | High | Deleting an asset with findings returns 500 and leaks raw SQL | _(not yet covered by a test)_ | Open |
+| F-003 | High | Reports summary crashes (500, ZeroDivisionError) for an org with zero findings | `tests/api/reports/test_reports_summary.py::test_summary_empty_org` (TC-P4-01) | Open |
+| F-004 | Critical | Cross-org finding status update is not blocked | `tests/api/findings/test_findings_cross_org.py::test_cross_org_finding_status_update_is_blocked` (TC-P1-05) | Open |
+| F-005 | High | Severity/status filters are case-sensitive (spec requires case-insensitive) | `tests/api/search/test_findings_search.py::test_severity_filter_is_case_insensitive`, `::test_status_filter_is_case_insensitive` (TC-P3-03/04) | Open |
 
 ---
 
-## F-001 — Cross-org asset retrieval is not blocked
+## F-001 — Cross-org asset access (read/update/delete) is not blocked
 
 **Severity:** Critical · **Status:** Open
 
-**Endpoint:** `GET /assets/{asset_id}`
+**Endpoint:** `GET /assets/{asset_id}`, `PUT /assets/{asset_id}`, `DELETE /assets/{asset_id}`
 
-**Summary:** A user authenticated under one organization can retrieve an
-asset that belongs to a different organization via direct ID lookup,
-breaking tenant data isolation.
+**Summary:** A user authenticated under one organization can read, modify, and
+delete assets belonging to a different organization via direct ID lookup,
+breaking tenant data isolation across every asset operation.
 
 **Reproduction:**
-1. `admin@org-beta` creates an asset via `POST /assets` (asset is stamped `org_id: org-beta`).
-2. `admin@org-alpha` (a separate organization) calls `GET /assets/{that-id}`.
-3. The API returns `200 OK` with the full org-beta asset body (`org_id`, `name`, `cloud_account`, `region`, `tags`).
+1. `admin@org-beta` creates an asset via `POST /assets` (stamped `org_id: org-beta`).
+2. As `admin@org-alpha` (a separate organization), against `{that-id}`:
+   - `GET /assets/{id}` → `200` with the full org-beta asset body.
+   - `PUT /assets/{id}` with `{"tags": {"env": "hacked"}}` → `200`; the org-beta
+     asset's tags are overwritten (still `org_id: org-beta`).
+   - `DELETE /assets/{id}` → `200 {"message":"Asset deleted"}`; org-beta's asset
+     is destroyed.
 
-**Expected:** `403` or `404` — never `200`, and no org-beta asset fields in the response.
+**Expected:** `403` or `404` for every operation — never `200`, no data disclosure,
+no cross-org mutation or deletion.
 
-**Observed:** `200 OK`, org-beta asset data fully disclosed to the org-alpha user.
+**Observed:** All three operations succeed (`200`) against another org's asset.
 
-**Notes:** The two accounts are genuinely separate organizations (the asset
-carries `org_id: org-beta`, and org-alpha authenticates with its own
-credentials). The test is intentionally left failing to track this bug.
+**Notes:** The two accounts are genuinely separate organizations (assets carry
+`org_id: org-beta`, and org-alpha authenticates with its own credentials). Tests
+are intentionally left failing to track this bug.
 
 ---
 
@@ -68,3 +76,91 @@ constraint. The `500` persists even after transitioning the finding to
 
 **Notes:** Discovered during builder verification. Not yet covered by a
 dedicated regression test.
+
+---
+
+## F-003 — Reports summary crashes for an org with zero findings
+
+**Severity:** High · **Status:** Open
+
+**Endpoint:** `GET /reports/summary`
+
+**Summary:** For an organization with zero findings, the summary endpoint
+computes a risk score as `open_findings / total_findings` and divides by
+zero, returning `500` with a full Python stack trace (including source file
+paths and the offending line).
+
+**Reproduction:**
+1. Authenticate as a user in an org that has no findings (e.g. a brand-new
+   or empty org).
+2. Call `GET /reports/summary`.
+
+**Expected:** `200` with well-formed zeros — `total_assets`/`total_findings`/
+`open_findings` = 0, severity breakdown all zero, and a defined risk score
+(e.g. `0`).
+
+**Observed:** `500 Internal Server Error` with a leaked stack trace:
+```
+ZeroDivisionError: division by zero
+  File "/app/app/reports/router.py", line 38, in get_summary
+    risk_score = round(open_findings / total_findings * 100, 1)
+```
+
+**Impact:** (1) The reports endpoint is unusable for any org until it has at
+least one finding. (2) Information disclosure — internal source paths and
+code leaked to clients.
+
+**Notes:** This is the org-specific `/reports/summary` failure called out in
+risk R4. `total_findings == 0` is the trigger, so only affects empty/finding-
+less orgs.
+
+---
+
+## F-004 — Cross-org finding status update is not blocked
+
+**Severity:** Critical · **Status:** Open
+
+**Endpoint:** `PATCH /findings/{finding_id}/status`
+
+**Summary:** A user in one organization can change the status of a finding
+owned by a different organization, breaking tenant isolation for finding
+lifecycle state.
+
+**Reproduction:**
+1. `admin@org-alpha` creates a finding (status `open`) on an org-alpha asset.
+2. As `admin@org-beta`, call `PATCH /findings/{finding_id}/status` with
+   `{"status": "mitigated"}`.
+
+**Expected:** `403` or `404`; the finding's status remains `open` for org-alpha.
+
+**Observed:** `200`, and the finding (`org_id: org-alpha`) is now `mitigated`.
+
+**Notes:** Note that `GET /findings` listing *is* correctly org-scoped
+(TC-P1-04 passes), so this is a gap specific to the status-update path, not
+a blanket findings-isolation failure.
+
+---
+
+## F-005 — Severity/status filters are case-sensitive
+
+**Severity:** High · **Status:** Open
+
+**Endpoint:** `GET /findings?severity=...`, `GET /findings?status=...`
+
+**Summary:** The findings severity and status filters only match the exact
+canonical casing. The spec requires them to be case-insensitive, so callers
+using a different case silently receive an empty result set instead of the
+matching findings.
+
+**Reproduction:**
+1. Ensure org-alpha has at least one open finding.
+2. `GET /findings?status=open` → returns the findings.
+3. `GET /findings?status=OPEN` and `?status=Open` → return an empty set.
+   (Same pattern for `severity`: only `CRITICAL` matches, not `critical`.)
+
+**Expected:** All casings of a valid value return the identical set of findings.
+
+**Observed:** Only the exact canonical case matches; other casings return `[]`.
+
+**Impact:** Silent under-returning — a filter that looks valid quietly drops all
+matches, which can hide findings from dashboards, scripts, and integrations.
