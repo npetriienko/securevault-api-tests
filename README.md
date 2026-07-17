@@ -126,6 +126,13 @@ Contract & coverage
   also revives the removed JSON Schema response-validation idea.
 - Broaden coverage: scan negative/failure paths, `AuthClient.refresh`/`logout`
   lifecycle, and more auth edge cases (expired token, wrong-org token).
+- Extend client test coverage with validation cases: missing required fields,
+  invalid enum values (`asset_type`, `severity`, `status`), malformed payloads,
+  and boundary values -- largely untested today (tests mostly cover the happy
+  path plus isolation/security).
+- Add end-to-end tests covering base user flows (e.g. login -> create asset ->
+  create finding -> transition status -> appears in reports summary), rather
+  than only single-endpoint/isolation checks.
 
 Tooling & ergonomics
 - Add `pyproject.toml` so `securevault_api` is an installable package (`pip install
