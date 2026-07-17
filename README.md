@@ -16,8 +16,7 @@ securevault-api-tests/
 │   └── data/builders/        # Faker-based payload builders
 ├── tests/                    # Test cases
 │   ├── api/                  # Endpoint-level tests grouped by domain
-│   ├── utils/                # Test-support helpers (custom assertions)
-│   └── integration/          # Multi-endpoint / end-to-end flows
+│   └── utils/                # Test-support helpers (custom assertions)
 ├── conftest.py               # Root fixtures
 ├── pytest.ini                # Pytest configuration
 ├── requirements.txt          # Dependencies
