@@ -3,12 +3,12 @@
 import pytest
 
 from securevault_api.data.builders import AssetBuilder
+from tests.utils.assertions import assert_body_excludes, assert_status
 
 
 @pytest.fixture
 def org_beta_asset(require_user, assets_client_for, faker):
     """Precondition: an asset that exists only in org-beta.
-
     Yields the created asset payload (incl. id); deletes it on teardown.
     """
     admin_beta = require_user("admin", "org-beta")
@@ -16,9 +16,7 @@ def org_beta_asset(require_user, assets_client_for, faker):
 
     payload = AssetBuilder(faker).build().to_payload()
     response = client.create_asset(payload)
-    assert response.status_code == 200, (
-        f"Setup failed to create org-beta asset: {response.status_code} {response.text}"
-    )
+    assert_status(response, 200)
     asset = response.json()
 
     yield asset
@@ -40,15 +38,12 @@ def test_cross_org_asset_retrieval_is_blocked(
     response = org_alpha_client.get_asset(org_beta_asset["id"])
 
     # Assert: access denied, never a successful read
-    assert response.status_code in (403, 404), (
-        f"Expected 403/404 for cross-org access, got {response.status_code}"
-    )
+    assert_status(response, 403, 404)
 
     # Assert: no org-beta asset fields leak in the response body
-    body = response.text
-    for value in (
+    assert_body_excludes(
+        response,
         org_beta_asset["name"],
         org_beta_asset["cloud_account"],
         org_beta_asset["region"],
-    ):
-        assert value not in body, f"org-beta asset data leaked: {value!r}"
+    )

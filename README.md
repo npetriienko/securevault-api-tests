@@ -12,10 +12,11 @@ API test suite for the SecureVault service, built with **Python + pytest + reque
 ## Layout
 ```
 securevault-api-tests/
-├── src/securevault_api/      # Reusable test framework (clients, models, config, utils)
+├── src/securevault_api/      # API-interaction toolkit (clients, models, config, builders)
 │   └── data/builders/        # Faker-based payload builders
 ├── tests/                    # Test cases
 │   ├── api/                  # Endpoint-level tests grouped by domain
+│   ├── utils/                # Test-support helpers (custom assertions)
 │   └── integration/          # Multi-endpoint / end-to-end flows
 ├── conftest.py               # Root fixtures
 ├── pytest.ini                # Pytest configuration
@@ -50,3 +51,5 @@ Tests that reproduce open bugs are intentionally left failing.
 - Implement JSON Schema response validation (removed for now) so tests can assert
   responses conform to the API contract. Would live under `data/schemas/` + a
   `schema_validator` util, driven off the OpenAPI spec.
+- Consider a fluent assertion library (e.g. `assertpy`, `dirty-equals`) for more
+  readable response assertions as the suite grows.
