@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from tests.utils.assertions import assert_status
+from tests.utils.assertions import assert_no_server_error, assert_status
 from tests.utils.pagination import collect_all_items
 
 
@@ -26,7 +26,7 @@ def test_pagination_page_zero_is_well_defined(
     second = list_call(page=0)
 
     # Assert: documented as 1-based, so page=0 must be well-defined and never a 500
-    assert first.status_code != 500, f"page=0 crashed: {first.text}"
+    assert_no_server_error(first)
     assert_status(first, 200, 400, 422)
     assert first.status_code == second.status_code
     if first.status_code == 200:

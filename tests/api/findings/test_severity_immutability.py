@@ -4,7 +4,7 @@ import concurrent.futures
 
 import pytest
 
-from tests.utils.assertions import assert_status
+from tests.utils.assertions import assert_no_server_error, assert_status
 
 
 @pytest.mark.findings
@@ -70,7 +70,7 @@ def test_concurrent_status_updates_do_not_corrupt(
 
     # Assert: no 500s, final state valid, severity intact
     for response in results:
-        assert response.status_code != 500, f"500 under concurrency: {response.text}"
+        assert_no_server_error(response)
     after = refetch_finding(alpha_asset["id"], finding_id)
     assert after["status"] in ("mitigated", "closed"), (
         f"corrupted status: {after['status']!r}"

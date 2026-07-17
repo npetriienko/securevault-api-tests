@@ -53,3 +53,6 @@ Tests that reproduce open bugs are intentionally left failing.
   `schema_validator` util, driven off the OpenAPI spec.
 - Consider a fluent assertion library (e.g. `assertpy`, `dirty-equals`) for more
   readable response assertions as the suite grows.
+- Finalize the assertions approach: decide the boundary between shared helpers in
+  `tests/utils/assertions.py` and inline test-specific asserts, and apply it
+  consistently across all suites (some business/domain checks are still inline).

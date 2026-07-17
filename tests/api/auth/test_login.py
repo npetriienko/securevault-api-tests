@@ -2,6 +2,8 @@
 
 import pytest
 
+from tests.utils.assertions import assert_json_has, assert_status
+
 
 @pytest.mark.auth
 @pytest.mark.smoke
@@ -13,7 +15,5 @@ def test_login_with_valid_credentials_returns_tokens(settings, auth_client):
     response = auth_client.login(admin.email, admin.password)
 
     # Assert
-    assert response.status_code == 200
-    body = response.json()
-    assert body.get("access_token")
-    assert body.get("refresh_token")
+    assert_status(response, 200)
+    assert_json_has(response, "access_token", "refresh_token")
