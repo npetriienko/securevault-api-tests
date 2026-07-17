@@ -38,3 +38,12 @@ durations, and failure details — open it directly in a browser.
 ## Environments
 Target environment is selected via the `ENV` variable (`dev` / `staging` / `prod`),
 resolved in `src/securevault_api/config`.
+
+## Findings
+Confirmed API defects surfaced by the suite are tracked in [FINDINGS.md](FINDINGS.md).
+Tests that reproduce open bugs are intentionally left failing.
+
+## TODO
+- Centralize asset create/cleanup into a shared helper/fixture so teardown is
+  robust as asset tests grow (currently each test manages its own cleanup, which
+  can silently fail if the client's auth state differs from creation time).
