@@ -10,6 +10,7 @@ Each entry links to the test that reproduces it.
 | F-003 | High | Reports summary crashes (500, ZeroDivisionError) for an org with zero findings | `tests/api/reports/test_reports_summary.py::test_summary_empty_org` (TC-P4-01) | Open |
 | F-004 | Critical | Cross-org finding status update is not blocked | `tests/api/findings/test_findings_cross_org.py::test_cross_org_finding_status_update_is_blocked` (TC-P1-05) | Open |
 | F-005 | High | Severity/status filters are case-sensitive (spec requires case-insensitive) | `tests/api/search/test_findings_search.py::test_severity_filter_is_case_insensitive`, `::test_status_filter_is_case_insensitive` (TC-P3-03/04) | Open |
+| F-006 | Low | `POST /scans` contract mismatch: returns 200 (spec says 201) and uses `scan_id` vs `id` | `tests/api/scans/test_scans_smoke.py` (partial) | Open |
 
 ---
 
@@ -164,3 +165,29 @@ matching findings.
 
 **Impact:** Silent under-returning — a filter that looks valid quietly drops all
 matches, which can hide findings from dashboards, scripts, and integrations.
+
+---
+
+## F-006 — `POST /scans` contract mismatch
+
+**Severity:** Low · **Status:** Open
+
+**Endpoint:** `POST /scans`, `GET /scans/{scan_id}/status`
+
+**Summary:** The scan endpoints deviate from the published OpenAPI contract in
+two small ways that break generated clients and schema validation.
+
+**Observed:**
+1. `POST /scans` returns **`200`** with `{"message": "Scan started",
+   "scan_id": "...", "status": "IN_PROGRESS", "attempt_number": 1}`, but the
+   OpenAPI spec documents a `201` response.
+2. The trigger response identifies the scan as `scan_id`, while
+   `GET /scans/{id}/status` returns the same value under `id` — inconsistent
+   field naming across the two endpoints.
+
+**Expected:** Response status and field names match the published `/openapi.json`
+schema, and the scan identifier is named consistently.
+
+**Notes:** Low severity (no data/security impact), but it trips OpenAPI-driven
+clients and schema-conformance checks. The scans smoke test tolerates the `200`
+to stay green; a strict schema-conformance test would flag it.

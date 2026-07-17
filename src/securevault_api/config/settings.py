@@ -30,8 +30,10 @@ TEST_USER_PREFIXES = {
 
 
 def _load_user(prefix, org, role):
-    email = os.environ[f"{prefix}_EMAIL"]
-    password = os.environ[f"{prefix}_PASSWORD"]
+    # Use .get(): a fully-absent var should skip the test (via require_user),
+    # not crash config loading with a KeyError.
+    email = os.environ.get(f"{prefix}_EMAIL", "")
+    password = os.environ.get(f"{prefix}_PASSWORD", "")
     return TestUser(org=org, role=role, email=email, password=password)
 
 

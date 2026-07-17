@@ -3,6 +3,8 @@
 List endpoints return {"total", "page", "limit", "items": [...]}.
 """
 
+from tests.utils.assertions import assert_status
+
 
 def collect_all_items(list_call, **kwargs):
     """Page through a paginated list endpoint and return every item.
@@ -14,9 +16,7 @@ def collect_all_items(list_call, **kwargs):
     page = 1
     while True:
         response = list_call(page=page, **kwargs)
-        assert response.status_code == 200, (
-            f"Pagination failed on page {page}: {response.status_code} {response.text}"
-        )
+        assert_status(response, 200)
         body = response.json()
         batch = body["items"]
         items.extend(batch)

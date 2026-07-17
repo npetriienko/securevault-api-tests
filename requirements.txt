@@ -1,8 +1,8 @@
-pytest
-requests
-python-dotenv
-jsonschema
-pytest-html
-faker
+pytest==9.1.1
+requests==2.34.2
+python-dotenv==1.2.2
+jsonschema==4.26.0
+pytest-html==4.2.0
+faker==40.31.0
 # allure-pytest
 # pytest-xdist   # parallel execution

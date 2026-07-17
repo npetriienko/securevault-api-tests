@@ -2,17 +2,20 @@
 
 import pytest
 
-from securevault_api.clients.assets_client import AssetsClient
-from securevault_api.clients.auth_client import AuthClient
-from securevault_api.clients.findings_client import FindingsClient
-from securevault_api.clients.reports_client import ReportsClient
+from securevault_api.clients import (
+    AssetsClient,
+    AuthClient,
+    FindingsClient,
+    ReportsClient,
+    ScansClient,
+)
 from securevault_api.data.builders import AssetBuilder, FindingBuilder
 from tests.utils.assertions import assert_status
 
 
 @pytest.fixture
 def auth_client(settings):
-    return AuthClient(settings.base_url)
+    return AuthClient(settings.base_url, timeout=settings.timeout)
 
 
 @pytest.fixture
@@ -44,11 +47,9 @@ def login(settings, _token_cache):
 
     def _login(user):
         if user.email not in _token_cache:
-            client = AuthClient(settings.base_url)
+            client = AuthClient(settings.base_url, timeout=settings.timeout)
             response = client.login(user.email, user.password)
-            assert response.status_code == 200, (
-                f"Login failed for {user.email}: {response.status_code} {response.text}"
-            )
+            assert_status(response, 200)
             _token_cache[user.email] = response.json()["access_token"]
         return _token_cache[user.email]
 
@@ -60,7 +61,7 @@ def client_for(settings, login):
     """Factory: a domain client of the given class, authenticated as a TestUser."""
 
     def _client(client_cls, user):
-        client = client_cls(settings.base_url)
+        client = client_cls(settings.base_url, timeout=settings.timeout)
         client.set_auth_header(login(user))
         return client
 
@@ -83,6 +84,12 @@ def findings_client_for(client_for):
 def reports_client_for(client_for):
     """Factory: a ReportsClient authenticated as the given TestUser."""
     return lambda user: client_for(ReportsClient, user)
+
+
+@pytest.fixture
+def scans_client_for(client_for):
+    """Factory: a ScansClient authenticated as the given TestUser."""
+    return lambda user: client_for(ScansClient, user)
 
 
 # --- Actors -----------------------------------------------------------------
