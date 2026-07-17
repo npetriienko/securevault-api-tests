@@ -66,6 +66,10 @@ Tooling & ergonomics
 - Add a linter/formatter (e.g. `ruff`) to codify style and catch dead imports.
 - Attach the failing request/response to the pytest-html report for faster triage.
 - Consider a fluent assertion library (`assertpy`, `dirty-equals`) as the suite grows.
+- Enable parallel execution (`pytest-xdist`, `-n auto`) to speed up runs. Needs
+  test isolation work first: avoid shared-state collisions (e.g. org-beta empty-org
+  assumption in TC-P4-01) and confirm the token cache/rate limiting hold up under
+  concurrent workers.
 
 Design decisions to settle
 - Finalize the assertions boundary: shared helpers in `tests/utils/assertions.py`
