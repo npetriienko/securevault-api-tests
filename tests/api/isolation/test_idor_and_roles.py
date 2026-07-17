@@ -3,7 +3,6 @@
 import pytest
 
 from tests.utils.assertions import assert_body_excludes, assert_status
-from tests.utils.pagination import collect_all_items
 
 
 @pytest.mark.isolation
@@ -13,17 +12,23 @@ def test_idor_sweep_foreign_ids_blocked(
 ):
     """TC-P1-07: probing another org's asset/finding IDs must never leak data."""
     # Sample size, not exhaustive: the spec calls for a "range of 10+" foreign IDs,
-    # and org-alpha's resource count only grows over time (F-002 blocks deletion),
-    # so sweeping every ID that ever existed would make this test unboundedly slow.
+    # and org-alpha's resource count only grows over time (F-002 blocks deletion).
+    # Request a single bounded page directly (not collect_all_items + slice) so
+    # this test doesn't page through the org's entire, ever-growing dataset just
+    # to throw most of it away.
     SAMPLE_SIZE = 5
 
     # Arrange: collect real org-alpha IDs (foreign from org-beta's perspective)
     alpha_assets = assets_client_for(admin_alpha)
     alpha_findings = findings_client_for(admin_alpha)
-    foreign_asset_ids = [a["id"] for a in collect_all_items(alpha_assets.list_assets)][:SAMPLE_SIZE]
-    foreign_finding_asset_ids = list(
-        {f["asset_id"] for f in collect_all_items(alpha_findings.list_findings)}
-    )[:SAMPLE_SIZE]
+    assets_page = alpha_assets.list_assets(page=1, limit=SAMPLE_SIZE)
+    assert_status(assets_page, 200)
+    foreign_asset_ids = [a["id"] for a in assets_page.json()["items"]]
+
+    findings_page = alpha_findings.list_findings(page=1, limit=SAMPLE_SIZE)
+    assert_status(findings_page, 200)
+    foreign_finding_asset_ids = {f["asset_id"] for f in findings_page.json()["items"]}
+
     assert foreign_asset_ids, "Precondition: org-alpha must have at least one asset"
     beta_assets = assets_client_for(admin_beta)
     beta_findings = findings_client_for(admin_beta)

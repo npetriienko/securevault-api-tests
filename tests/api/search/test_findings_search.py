@@ -65,9 +65,15 @@ def test_severity_filter_is_case_insensitive(
     make_alpha_finding(alpha_asset["id"], severity="CRITICAL")
     client = findings_client_for(admin_alpha)
 
-    # Act
+    # Act: scope to this test's own asset -- an org-wide sweep would page through
+    # the org's entire (ever-growing, since F-002 blocks deletion) findings set.
     result_sets = [
-        {f["id"] for f in collect_all_items(client.list_findings, severity=value)}
+        {
+            f["id"]
+            for f in collect_all_items(
+                client.list_findings, asset_id=alpha_asset["id"], severity=value
+            )
+        }
         for value in ("critical", "CRITICAL", "Critical")
     ]
 
@@ -86,10 +92,15 @@ def test_status_filter_is_case_insensitive(
     """TC-P3-04: status filter returns the same set regardless of case."""
     # Arrange (org_alpha_finding guarantees at least one "open" finding exists)
     client = findings_client_for(admin_alpha)
+    asset_id = org_alpha_finding["asset_id"]
 
-    # Act
+    # Act: scope to this test's own asset -- an org-wide sweep would page through
+    # the org's entire (ever-growing, since F-002 blocks deletion) findings set.
     result_sets = [
-        {f["id"] for f in collect_all_items(client.list_findings, status=value)}
+        {
+            f["id"]
+            for f in collect_all_items(client.list_findings, asset_id=asset_id, status=value)
+        }
         for value in ("open", "OPEN", "Open")
     ]
 
