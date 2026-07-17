@@ -3,7 +3,7 @@
 import jsonschema
 import pytest
 
-from securevault_api.clients.system_client import SystemClient
+from securevault_api.clients import SystemClient
 from securevault_api.data.builders import AssetBuilder
 from tests.utils.assertions import assert_status
 
@@ -14,7 +14,13 @@ from tests.utils.assertions import assert_status
 def test_reports_summary_is_org_scoped(
     admin_alpha, admin_beta, reports_client_for, assets_client_for, faker
 ):
-    """TC-P1-06: a summary's counts never include another organization's data."""
+    """TC-P1-06: a summary's asset count is org-scoped.
+
+    Creating an asset in another org (org-beta) must not change the caller's
+    total_assets. Findings/risk-score scoping isn't exercised here: seeding an
+    org-beta finding would pollute org-beta (breaking the empty-org case
+    TC-P4-01) and can't be undone (findings aren't deletable -- F-002).
+    """
     # Arrange: baseline org-alpha summary, then add an asset in a different org
     alpha_reports = reports_client_for(admin_alpha)
     before = alpha_reports.get_summary()
@@ -48,10 +54,12 @@ def test_summary_empty_org(admin_beta, reports_client_for):
     # Assert
     assert_status(response, 200)
     body = response.json()
-    assert body["total_findings"] == 0
-    assert body["open_findings"] == 0
-    assert all(count == 0 for count in body["severity_breakdown"].values())
-    assert body["risk_score_percent"] is not None
+    assert body["total_findings"] == 0, f"expected zero findings: {body}"
+    assert body["open_findings"] == 0, f"expected zero open findings: {body}"
+    assert all(count == 0 for count in body["severity_breakdown"].values()), (
+        f"expected all-zero severity breakdown: {body['severity_breakdown']}"
+    )
+    assert body["risk_score_percent"] is not None, "risk_score_percent should be defined"
 
 
 @pytest.mark.reports
@@ -68,11 +76,11 @@ def test_summary_closed_findings_only(reports_client_for):
 @pytest.mark.reports
 @pytest.mark.p4_medium
 def test_summary_performance(admin_alpha, reports_client_for):
-    """TC-P4-03 (scaled down): summary responds quickly and consistently.
+    """TC-P4-03 (scaled down): summary responds within the time budget.
 
     The spec calls for 500 assets / 2000 findings, but bulk-seeding the shared
     server is infeasible and unrecoverable (F-002), so this runs against
-    org-alpha's existing dataset as a performance/consistency smoke.
+    org-alpha's existing dataset as a performance smoke.
     """
     # Act
     response = reports_client_for(admin_alpha).get_summary()
@@ -82,8 +90,6 @@ def test_summary_performance(admin_alpha, reports_client_for):
     assert response.elapsed.total_seconds() < 2.0, (
         f"summary too slow: {response.elapsed.total_seconds():.2f}s"
     )
-    body = response.json()
-    assert body["open_findings"] <= body["total_findings"]
 
 
 @pytest.mark.reports

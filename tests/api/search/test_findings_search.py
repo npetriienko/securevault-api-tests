@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from tests.utils.assertions import assert_no_server_error, assert_status
+from tests.utils.assertions import assert_status
 from tests.utils.pagination import collect_all_items
 
 
@@ -12,12 +12,12 @@ from tests.utils.pagination import collect_all_items
 @pytest.mark.p3_high
 @pytest.mark.parametrize("endpoint", ["assets", "findings"])
 def test_pagination_page_zero_is_well_defined(
-    endpoint, alpha_assets, admin_alpha, findings_client_for
+    endpoint, admin_alpha, assets_client_for, findings_client_for
 ):
     """TC-P3-01: page=0 is a validation error or a consistent, non-crashing response."""
-    # Arrange
+    # Arrange: build only the client this parametrization needs
     if endpoint == "assets":
-        list_call = alpha_assets.list_assets
+        list_call = assets_client_for(admin_alpha).list_assets
     else:
         list_call = findings_client_for(admin_alpha).list_findings
 
@@ -25,8 +25,8 @@ def test_pagination_page_zero_is_well_defined(
     first = list_call(page=0)
     second = list_call(page=0)
 
-    # Assert: documented as 1-based, so page=0 must be well-defined and never a 500
-    assert_no_server_error(first)
+    # Assert: documented as 1-based, so page=0 must be well-defined -- a validation
+    # error or a consistent 200, never a 500 (which the status set already excludes).
     assert_status(first, 200, 400, 422)
     assert first.status_code == second.status_code
     if first.status_code == 200:

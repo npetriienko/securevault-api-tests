@@ -17,7 +17,9 @@ def test_severity_immutable_across_lifecycle(
     client = findings_client_for(admin_alpha)
     finding_id = org_alpha_finding["id"]
     asset_id = org_alpha_finding["asset_id"]
-    assert org_alpha_finding["severity"] == "HIGH"
+    assert org_alpha_finding["severity"] == "HIGH", (
+        "fixture precondition: org_alpha_finding should be HIGH severity"
+    )
 
     # Act + Assert: severity survives each status transition
     assert_status(client.update_status(finding_id, {"status": "mitigated"}), 200)

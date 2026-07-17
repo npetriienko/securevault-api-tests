@@ -7,12 +7,10 @@ from tests.utils.assertions import assert_json_has, assert_status
 
 @pytest.mark.auth
 @pytest.mark.smoke
-def test_login_with_valid_credentials_returns_tokens(settings, auth_client):
-    # Arrange
-    admin = settings.user("admin", "org-alpha")
-
+def test_login_with_valid_credentials_returns_tokens(admin_alpha, auth_client):
+    """Valid credentials return both an access token and a refresh token."""
     # Act
-    response = auth_client.login(admin.email, admin.password)
+    response = auth_client.login(admin_alpha.email, admin_alpha.password)
 
     # Assert
     assert_status(response, 200)
