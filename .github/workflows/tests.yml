@@ -31,7 +31,6 @@ jobs:
           ANALYST_ORG_ALPHA_PASSWORD: ${{ secrets.ANALYST_ORG_ALPHA_PASSWORD }}
           ADMIN_ORG_BETA_EMAIL: ${{ secrets.ADMIN_ORG_BETA_EMAIL }}
           ADMIN_ORG_BETA_PASSWORD: ${{ secrets.ADMIN_ORG_BETA_PASSWORD }}
-          API_KEY: ${{ secrets.API_KEY }}
         run: pytest
 
       - name: Upload report

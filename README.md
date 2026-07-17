@@ -101,7 +101,7 @@ tests hit a live API, configure these under the repo's **Settings → Secrets an
 variables → Actions**:
 - **Variables:** `ENV`, `BASE_URL`
 - **Secrets:** `ADMIN_ORG_ALPHA_EMAIL/_PASSWORD`, `ANALYST_ORG_ALPHA_EMAIL/_PASSWORD`,
-  `ADMIN_ORG_BETA_EMAIL/_PASSWORD` (and `API_KEY` if used)
+  `ADMIN_ORG_BETA_EMAIL/_PASSWORD`
 
 Without them the credential-dependent tests skip. Note the build reflects real API
 health — it stays red while the defects in [FINDINGS.md](FINDINGS.md) are open.
