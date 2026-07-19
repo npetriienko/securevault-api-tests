@@ -6,7 +6,7 @@ Each entry links to the test that reproduces it.
 | ID | Severity | Title | Test | Status |
 |----|----------|-------|------|--------|
 | F-001 | Critical | Cross-org asset access (read/update/delete) is not blocked | `tests/api/assets/test_asset_cross_org.py` (TC-P1-01/02/03), `tests/api/isolation/test_idor_and_roles.py` (TC-P1-07/08) | Open |
-| F-002 | High | Deleting an asset with findings returns 500 and leaks raw SQL | _(not yet covered by a test)_ | Open |
+| F-002 | High | Deleting an asset with findings returns 500 and leaks raw SQL | `tests/api/assets/test_asset_deletion.py::test_delete_asset_with_findings_is_blocked_cleanly` | Open |
 | F-003 | High | Reports summary crashes (500, ZeroDivisionError) for an org with zero findings | `tests/api/reports/test_reports_summary.py::test_summary_empty_org` (TC-P4-01) | Open |
 | F-004 | Critical | Cross-org finding status update is not blocked | `tests/api/findings/test_findings_cross_org.py::test_cross_org_finding_status_update_is_blocked` (TC-P1-05) | Open |
 | F-005 | High | Severity/status filters are case-sensitive (spec requires case-insensitive) | `tests/api/search/test_findings_search.py::test_severity_filter_is_case_insensitive`, `::test_status_filter_is_case_insensitive` (TC-P3-03/04) | Open |
@@ -75,8 +75,8 @@ constraint. The `500` persists even after transitioning the finding to
 **Impact:** (1) Information disclosure — raw SQL/schema leaked to clients.
 (2) Test pollution — assets created in finding tests cannot be cleaned up.
 
-**Notes:** Discovered during builder verification. Not yet covered by a
-dedicated regression test.
+**Notes:** Discovered during builder verification. Reproduced by
+`tests/api/assets/test_asset_deletion.py::test_delete_asset_with_findings_is_blocked_cleanly`.
 
 ---
 
